@@ -8,7 +8,9 @@ This portfolio explores in-game data using SQL, based on the rAthena database st
 
 You can find the rAthena database schema on [rAthena](https://github.com/rathena/rathena).
 
-The folder [SQL Use Case] contains the queries, mock-data, and database. Only database tables that are included in the usecase will be uploaded. If you're wondering about the whole tables of rAthena database, please visit the rAthena github page.
+The folder [SQL Use Case] contains the queries, mock-data, and database. The queries folder contains the .sql of each use cases. The mock-data folder contains the mock data of the table that got used in the use-case. Meanwhile, the database folder will contains the schema of the tables.
+
+If you're wondering about the whole tables of rAthena database, please visit the rAthena github page.
 
 You can also find the SQL_Use_Case.docx that contains the documentation of purpose, sql query, and the screenshot of output table.
 
