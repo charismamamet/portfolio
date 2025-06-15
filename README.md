@@ -23,7 +23,7 @@ You can also find the SQL_Use_Case.docx that contains the documentation of purpo
 
 ### 📁 Use Cases
 
-- ✅ Create table that contains item id and which char have that and which account is that where the account has login within last 30 days (item_ownership.sql)
+- ✅ Create table that contains item id and which char have that and which account has that. Only account that has login within last 30 days that is put on the list (item_ownership.sql)
 - ✅ Table containing character's zeny (zeny_owner.sql)
 - ✅ Table containing character's zeny and how many unique item that they have (zeny_and_item_owner.sql)
 - ✅ Number of daily active users last 30 days (dau_l30d_nominal.sql)
