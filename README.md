@@ -2,7 +2,7 @@
 Hey, thanks for reading this readme. This portfolio folder contains both dummy project and actual project that i've done.
 
 
-## 🧙 SQL Analytics
+## 🧙 SQL Analytics rAthena
 
 This portfolio explores in-game data using SQL, based on the rAthena database structure. It covers character ownership, item hoarding behavior, login activity, and more.
 
