@@ -2,13 +2,13 @@
 Hey, thanks for reading this readme. This portfolio folder contains both dummy project and actual project that i've done.
 
 
-## 🧙 SQL Analytics
+## 🧙 SQL Analytics rAthena
 
 This portfolio explores in-game data using SQL, based on the rAthena database structure. It covers character ownership, item hoarding behavior, login activity, and more.
 
 You can find the rAthena database schema on [rAthena](https://github.com/rathena/rathena).
 
-The folder [SQL Use Case] contains the queries, mock-data, and database.
+The folders, such as [SQL Analytics rAthena], contains the queries, mock-data, and database.
 
 The queries folder contains the .sql of each use cases.
 
@@ -21,7 +21,7 @@ If you're wondering about the whole tables of rAthena database, please visit the
 You can also find the SQL_Use_Case.docx that contains the documentation of purpose, sql query, and the screenshot of output table.
 
 
-### 📁 Use Cases
+### 📁 Use Cases on [SQL Analytics rAthena] folder
 
 - ✅ Create table that contains item id and which char have that and which account has that. Only account that has login within last 30 days that is put on the list (item_ownership.sql)
 - ✅ Table containing character's zeny (zeny_owner.sql)
