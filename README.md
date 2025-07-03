@@ -37,3 +37,21 @@ You can also find the SQL_Use_Case.docx that contains the documentation of purpo
 - ✅ Top 3 common items (commonItem.sql)
 - ✅ List of user ids that start with letter c (user_start_c.sql)
 - ✅ Accounts that is suspicious of cheating cos it contains god item (cheatSus.sql)
+
+## 🎸 SQL Analytics SQL Play
+
+The [SQL Analytics SQL Play] folder contains data based on the [SQL Play Apps](https://play.google.com/store/apps/details?id=com.sql_playground). 
+
+You can download the game and use my code straight at the in-game terminal to check how each code performs.
+
+The queries for each use case is saved as .sql format which you can open with any text editor app.
+
+I will also upload the data schema of the database that the game use.
+
+You can still find the SQL_Use_Case_sql_play.docx that contains the documentation purpose, sql queries, and the screenshot of the output table
+
+### 📁 Use Cases on [SQL Analytics SQL Play] folder
+
+
+
+
