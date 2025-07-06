@@ -20,7 +20,7 @@ You can still find the SQL_Use_Case_sql_play.docx that contains the documentatio
 - ✅ Top Grossing Genres (top-grossing-genre.sql)
 - ✅ Find Invoices That Contain More Than 5 Tracks (invoices-more-than-5-tracks.sql)
 - ✅ Albums and the number of Tracks (album-with-tracks.sql)
-- ✅ Longest and Shortest Tracks Per Genre 
+- ✅ Longest and Shortest Tracks Per Genre (longest-shortest-track-per-genre.sql)
 - ✅ Customers Who Haven’t Made Any Purchases
 - ✅ Find Repeat Customers - make purchase more than 3 separate purchases
 - ✅ Top 3 Artists by Number of Tracks Sold
