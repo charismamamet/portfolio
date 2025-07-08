@@ -2,6 +2,8 @@
 
 This portfolio explores in-game data using SQL, based on the rAthena database structure. It covers character ownership, item hoarding behavior, login activity, and more.
 
+Within this use cases, i use mySQL through myPHP-admin.
+
 You can find the rAthena database schema on [rAthena](https://github.com/rathena/rathena).
 
 The folders, such as [SQL Analytics rAthena], contains the queries, mock-data, and database.
