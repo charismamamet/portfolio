@@ -1,6 +1,8 @@
 # Portfolio
 Hey, thanks for reading this readme. This portfolio folder contains both dummy project and actual project that i've done.
 
+If you're interested to talk about these projects personally, please contact me through [LinkedIn](https://www.linkedin.com/in/charismarahmat)
+
 
 ## 🧙 SQL Analytics rAthena
 
