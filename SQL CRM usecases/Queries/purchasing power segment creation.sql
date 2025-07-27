@@ -25,23 +25,23 @@ FROM (
     -- 📦 Filters: only get buyers who has transaction 21 July 2025 and never again after that
     WHERE 1
     AND x.user_id IN (
-		-- tabel consist of user_id of ppl who make purchase before 21 July 2025
+		      -- tabel consist of user_id of ppl who make purchase before 21 July 2025
         SELECT o.user_id
         FROM mock_renos_db.mock_purchase AS o
         WHERE order_date < '2025-07-21'
           AND order_status IN ('menunggu pembayaran', 'selesai')  -- only valid orders
       )
     AND x.user_id NOT IN (
-		-- tabel consit of user_id of ppl who make purchase on or after 21 July 2025
+		      -- tabel consit of user_id of ppl who make purchase on or after 21 July 2025
         SELECT q.user_id
         FROM mock_renos_db.mock_purchase AS q
         WHERE order_date >= '2025-07-21'
           AND order_status IN ('menunggu pembayaran', 'selesai')  -- exclude those who purchased again
       )
-    AND order_status IN ('menunggu pembayaran', 'selesai')  -- include only relevant statuses
-    AND xs.seller_name IS NULL  -- exclude suspicious sellers
+    AND order_status IN ('menunggu pembayaran', 'selesai')
+    AND xs.seller_name IS NULL
     AND x.user_id NOT IN (
-        -- ❌ Exclude buyers who meet price & behavior filters but are still suspicious
+        -- Exclude buyers who meet price & behavior filters but are still suspicious
         SELECT DISTINCT(p.user_id)
         FROM mock_renos_db.mock_purchase AS p
         LEFT JOIN mock_renos_db.suspicious_seller AS ss ON ss.seller_name = p.seller_name
@@ -50,8 +50,8 @@ FROM (
             SELECT r.user_id
             FROM mock_renos_db.mock_purchase AS r
             WHERE order_date < '2025-07-21'
-              AND order_status IN ('menunggu pembayaran', 'selesai')
-              AND sku_sell_price / sku_qty <= 500000  -- suspicious low-price transactions
+            AND order_status IN ('menunggu pembayaran', 'selesai')
+            AND sku_sell_price / sku_qty <= 500000
         )
         AND p.user_id NOT IN (
             SELECT user_id
@@ -62,9 +62,9 @@ FROM (
         AND ss.seller_name IS NULL
         AND sb.user_id IS NULL
       )
-    AND xb.user_id IS NULL  -- exclude known suspicious buyers
+    AND xb.user_id IS NULL
     GROUP BY x.user_id
-  ) AS user_stats  -- 🧾 Result: a row per user with purchase metrics
-) AS stats_with_quartile  -- 📊 Result: adds qgroup label for quartile
-WHERE qgroup IN ('q1', 'q2')  -- 📌 Only keep users in lowest two quartiles (less spending power)
-ORDER BY avg_sku_price DESC;  -- 📈 Sort by average SKU price (descending)
+  ) AS user_stats
+) AS stats_with_quartile
+WHERE qgroup IN ('q1', 'q2')
+ORDER BY avg_sku_price DESC;
