@@ -9,11 +9,11 @@ FROM (
     -- Step 1: computes per-user aggregated purchase behavior metrics
     SELECT 
       x.user_id,
-      COUNT(x.order_id) AS total_order,                         -- total number of orders by user
-      SUM(x.sku_qty) AS total_sku_purchased,                   -- total quantity of SKUs purchased
-      SUM(x.sku_sell_price) AS total_gmv,                      -- total gross merchandise value (GMV)
-      ROUND(SUM(x.sku_sell_price)/SUM(x.sku_qty), 0) AS avg_sku_price,  -- average price per SKU purchased
-      ROUND(SUM(x.sku_sell_price)/COUNT(x.order_id), 0) AS aov -- average order value
+      COUNT(x.order_id) AS total_order,
+      SUM(x.sku_qty) AS total_sku_purchased,
+      SUM(x.sku_sell_price) AS total_gmv,
+      ROUND(SUM(x.sku_sell_price)/SUM(x.sku_qty), 0) AS avg_sku_price,
+      ROUND(SUM(x.sku_sell_price)/COUNT(x.order_id), 0) AS aov
     FROM mock_renos_db.mock_purchase AS x
 
     -- Cek suspicious seller list
