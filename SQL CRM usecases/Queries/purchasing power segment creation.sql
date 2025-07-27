@@ -1,10 +1,10 @@
--- 🧮 Final query: selects only users in q1 and q2 purchasing power groups
+-- Step 3: selects only users in q1 and q2 purchasing power groups
 SELECT *
 FROM (
-  -- 🧮 Middle subquery: adds a `qgroup` column by splitting users into 4 quartiles based on `avg_sku_price`
+  -- Step 2: adds a `qgroup` column by splitting users into 4 quartiles based on `avg_sku_price`
   SELECT 
     *,
-    CONCAT('q', NTILE(4) OVER (ORDER BY avg_sku_price)) AS qgroup  -- assigns quartile labels: 'q1' (lowest) to 'q4' (highest)
+    CONCAT('q', NTILE(4) OVER (ORDER BY avg_sku_price)) AS qgroup
   FROM (
     -- Step 1: computes per-user aggregated purchase behavior metrics
     SELECT 
@@ -38,33 +38,12 @@ FROM (
         WHERE order_date >= '2025-07-21'
           AND order_status IN ('menunggu pembayaran', 'selesai')  -- exclude those who purchased again
       )
-    AND order_status IN ('menunggu pembayaran', 'selesai')
+    AND x.order_status IN ('menunggu pembayaran', 'selesai')
     AND xs.seller_name IS NULL
-    AND x.user_id NOT IN (
-        -- Exclude buyers who meet price & behavior filters but are still suspicious
-        SELECT DISTINCT(p.user_id)
-        FROM mock_renos_db.mock_purchase AS p
-        LEFT JOIN mock_renos_db.suspicious_seller AS ss ON ss.seller_name = p.seller_name
-        LEFT JOIN mock_renos_db.suspicious_buyer AS sb ON sb.user_id = p.user_id
-        WHERE p.user_id IN (
-            SELECT r.user_id
-            FROM mock_renos_db.mock_purchase AS r
-            WHERE order_date < '2025-07-21'
-            AND order_status IN ('menunggu pembayaran', 'selesai')
-            AND sku_sell_price / sku_qty <= 500000
-        )
-        AND p.user_id NOT IN (
-            SELECT user_id
-            FROM mock_renos_db.mock_purchase
-            WHERE order_date >= '2025-07-21'
-              AND order_status IN ('menunggu pembayaran', 'selesai')
-          )
-        AND ss.seller_name IS NULL
-        AND sb.user_id IS NULL
-      )
-    AND xb.user_id IS NULL
+    AND xb.user_id is null
     GROUP BY x.user_id
-  ) AS user_stats
-) AS stats_with_quartile
+  ) AS user_stats -- end of step 1
+) AS stats_with_quartile -- end of step 2
 WHERE qgroup IN ('q1', 'q2')
-ORDER BY avg_sku_price DESC;
+ORDER BY avg_sku_price DESC -- end of step 3
+;
