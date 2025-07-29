@@ -1,25 +1,25 @@
 -- step 3 create pivot that is ready to be uploaded to prod catalog
 select 
-	f2.pair_a as initial_cat,
+	f2.item_a as initial_cat,
     f2.total_a as initial_orders,
-    max(case when f2.rn = 1 then f2.pair_b else null end) as pair_1,
+    max(case when f2.rn = 1 then f2.item_b else null end) as pair_1,
     max(case when f2.rn = 1 then f2.lift else null end) as lift_1,
-    max(case when f2.rn = 2 then f2.pair_b else null end) as pair_2,
+    max(case when f2.rn = 2 then f2.item_b else null end) as pair_2,
     max(case when f2.rn = 2 then f2.lift else null end) as lift_2,
-    max(case when f2.rn = 3 then f2.pair_b else null end) as pair_3,
+    max(case when f2.rn = 3 then f2.item_b else null end) as pair_3,
     max(case when f2.rn = 3 then f2.lift else null end) as lift_3
 from (
     -- step 2 create dataset that show the rn
     select 
 		f1.*,
-    	row_number() over (partition by f1.pair_a order by f1.lift desc) as rn
+    	row_number() over (partition by f1.item_a order by f1.lift desc) as rn
 	from (
-    	-- step 1 create dataset that show pair_a and pair_b with lift number as a column
+    	-- step 1 create dataset that show item_a and item_b with lift number as a column
     	SELECT 
-			a.cat_name AS pair_a,
+			a.cat_name AS item_a,
 			ta.total_a,
 
-			b.cat_name AS pair_b,
+			b.cat_name AS item_b,
 			tb.total_b,  
   
 			COUNT(*) AS pair_count,
@@ -34,7 +34,7 @@ from (
 		JOIN mock_renos_db.mock_purchase AS b ON a.order_id = b.order_id AND a.cat_name <> b.cat_name
 
 		inner JOIN (
-            -- total_a: how many times pair_a appears
+            -- total_a: how many times item_a appears
   			SELECT cat_name, COUNT(*) AS total_a
   			FROM mock_renos_db.mock_purchase
   			WHERE 1
@@ -45,7 +45,7 @@ from (
 			) AS ta ON a.cat_name = ta.cat_name
 
 		inner JOIN (
-            -- total_b: how many times pair_b appears
+            -- total_b: how many times item_b appears
   			SELECT cat_name, COUNT(*) AS total_b
   			FROM mock_renos_db.mock_purchase
   			WHERE 1
@@ -69,7 +69,7 @@ from (
 			and a.order_status IN ('menunggu pembayaran', 'selesai')
 			AND a.order_date BETWEEN '2025-07-01' AND '2025-07-27'
 
-		GROUP BY pair_a, pair_b
+		GROUP BY item_a, item_b
 		ORDER BY total_a desc, lift DESC
 		-- end of step 1
 		) as f1
