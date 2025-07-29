@@ -38,38 +38,46 @@ from (
   			SELECT cat_name, COUNT(*) AS total_a
   			FROM mock_renos_db.mock_purchase
   			WHERE 1
-        	and order_status IN ('menunggu pembayaran', 'selesai')
-    		AND order_date BETWEEN '2025-07-01' AND '2025-07-23'
+				and order_status IN ('menunggu pembayaran', 'selesai')
+				AND order_date BETWEEN '2025-07-01' AND '2025-07-27'
   			GROUP BY cat_name
-		) AS ta ON a.cat_name = ta.cat_name
+			-- end of total a
+			) AS ta ON a.cat_name = ta.cat_name
 
 		inner JOIN (
             -- total_b: how many times pair_b appears
   			SELECT cat_name, COUNT(*) AS total_b
   			FROM mock_renos_db.mock_purchase
   			WHERE 1
-        	and order_status IN ('menunggu pembayaran', 'selesai')
-    		AND order_date BETWEEN '2025-07-01' AND '2025-07-23'
+				and order_status IN ('menunggu pembayaran', 'selesai')
+				AND order_date BETWEEN '2025-07-01' AND '2025-07-27'
   			GROUP BY cat_name
-		) AS tb ON b.cat_name = tb.cat_name
+			-- end of total_b
+			) AS tb ON b.cat_name = tb.cat_name
 
 		CROSS JOIN (
             -- total orders
   			SELECT COUNT(DISTINCT order_id) AS total_order_count
   			FROM mock_renos_db.mock_purchase
   			WHERE 1
-        	and order_status IN ('menunggu pembayaran', 'selesai')
-    		AND order_date BETWEEN '2025-07-01' AND '2025-07-23'
-		) AS tod
+				and order_status IN ('menunggu pembayaran', 'selesai')
+				AND order_date BETWEEN '2025-07-01' AND '2025-07-27'
+			-- end of total orders
+			) AS tod
 
 		WHERE 1
-    	and a.order_status IN ('menunggu pembayaran', 'selesai')
-  		AND a.order_date BETWEEN '2025-07-01' AND '2025-07-23'
+			and a.order_status IN ('menunggu pembayaran', 'selesai')
+			AND a.order_date BETWEEN '2025-07-01' AND '2025-07-27'
 
 		GROUP BY pair_a, pair_b
 		ORDER BY total_a desc, lift DESC
-	) as f1
-) as f2
+		-- end of step 1
+		) as f1
+	-- end of step 2
+	) as f2
+where 1
+	and f2.lift >= 1
 group by initial_cat
 order by initial_orders desc
+-- end of step 3
 ;
