@@ -1,15 +1,15 @@
--- step 4: whole table
+-- start step 4: whole table
 select 
 	z.*,
     z2.min_avg_item_price,
     z2.max_avg_item_price
 from (
-    -- step 2a: add quantile group identification
+    -- start of step 2a: add quantile group identification
 	select 
 		y.*,
     	concat('q', ntile(4) over (order by y.avg_item_price)) as qgroup
 	from (
-        -- step 1a: user purchasing power as dataset to create quantile identification
+        -- start of step 1a: user purchasing power as dataset to create quantile identification
 		select
         	x.user_id,
         	count(distinct(x.order_id)) as total_order,
@@ -40,22 +40,24 @@ from (
     	and x1.user_id is null
     	and x2.seller_name is null
     	group by x.user_id
+		-- end of step 1a
     	) as y
+	-- end of step 2a
 	) as z
 
 join (
-	-- step 3: max and min tab for each quantile 
+	-- start step 3: max and min tab for each quantile 
     SELECT 
   		z1.qgroup,
   		MIN(z1.avg_item_price) AS min_avg_item_price,
   		MAX(z1.avg_item_price) AS max_avg_item_price
 	FROM (
-        -- step 2b: add quantile group identification to create max and min tab for each quantile
+        -- start step 2b: add quantile group identification to create max and min tab for each quantile
   		SELECT 
     		y.*,
     		CONCAT('q', NTILE(4) OVER (ORDER BY y.avg_item_price)) AS qgroup
   		FROM (
-    		-- Step 1b: user purchasing power as dataset to create max and min tab for each quantile
+    		-- Start step 1b: user purchasing power as dataset to create max and min tab for each quantile
     		SELECT
       			x.user_id,
       			COUNT(DISTINCT x.order_id) AS total_order,
@@ -82,9 +84,13 @@ join (
       		AND x1.user_id IS NULL
       		AND x2.seller_name IS NULL
     		GROUP BY x.user_id
+			-- end of step 1b
   			) AS y
+		-- end step 2b
 		) AS z1
 	GROUP BY z1.qgroup
+	-- end of step 3
     ) as z2 on z2.qgroup=z.qgroup
 
-group by z.user_id, z.total_order, z.total_item, z.gmv, z.aov, z.avg_item_price, z.qgroup;
+group by z.user_id, z.total_order, z.total_item, z.gmv, z.aov, z.avg_item_price, z.qgroup
+-- end of step 4;
