@@ -21,24 +21,24 @@ from (
     	left join mock_renos_db.suspicious_buyer as x1 on x1.user_id = x.user_id
     	left join mock_renos_db.suspicious_seller as x2 on x2.seller_name = x.seller_name
     	where 1
-    	and x.user_id in (
-    		select
-            	xa.user_id
-        	from mock_renos_db.mock_purchase as xa
-        	where 1
-        	and xa.order_date < '2025-07-21'
-        	and xa.order_status in ('menunggu pembayaran', 'selesai')
-        	)
-    	and x.user_id not in (
-        	select
-            	xb.user_id
-        	from mock_renos_db.mock_purchase as xb
-        	where 1
-        	and xb.order_date >= '2025-07-21'
-        	and xb.order_status in ('menunggu pembayaran', 'selesai')
-        	)
-    	and x1.user_id is null
-    	and x2.seller_name is null
+			and x.user_id in (
+				select
+					xa.user_id
+				from mock_renos_db.mock_purchase as xa
+				where 1
+					and xa.order_date < '2025-07-21'
+					and xa.order_status in ('menunggu pembayaran', 'selesai')
+				)
+			and x.user_id not in (
+				select
+					xb.user_id
+				from mock_renos_db.mock_purchase as xb
+				where 1
+					and xb.order_date >= '2025-07-21'
+					and xb.order_status in ('menunggu pembayaran', 'selesai')
+				)
+			and x1.user_id is null
+			and x2.seller_name is null
     	group by x.user_id
 		-- end of step 1a
     	) as y
@@ -69,20 +69,22 @@ join (
     		LEFT JOIN mock_renos_db.suspicious_buyer AS x1 ON x1.user_id = x.user_id
     		LEFT JOIN mock_renos_db.suspicious_seller AS x2 ON x2.seller_name = x.seller_name
     		WHERE 1
-      		AND x.user_id IN (
-        		SELECT xa.user_id
-        		FROM mock_renos_db.mock_purchase AS xa
-       			WHERE xa.order_date < '2025-07-21'
-          		AND xa.order_status IN ('menunggu pembayaran', 'selesai')
-      			)
-      		AND x.user_id NOT IN (
-        		SELECT xb.user_id
-        		FROM mock_renos_db.mock_purchase AS xb
-        		WHERE xb.order_date >= '2025-07-21'
-          		AND xb.order_status IN ('menunggu pembayaran', 'selesai')
-      			)
-      		AND x1.user_id IS NULL
-      		AND x2.seller_name IS NULL
+				AND x.user_id IN (
+					SELECT xa.user_id
+					FROM mock_renos_db.mock_purchase AS xa
+					WHERE 1
+						and xa.order_date < '2025-07-21'
+						AND xa.order_status IN ('menunggu pembayaran', 'selesai')
+					)
+				AND x.user_id NOT IN (
+					SELECT xb.user_id
+					FROM mock_renos_db.mock_purchase AS xb
+					WHERE 1
+						and xb.order_date >= '2025-07-21'
+						AND xb.order_status IN ('menunggu pembayaran', 'selesai')
+					)
+				AND x1.user_id IS NULL
+				AND x2.seller_name IS NULL
     		GROUP BY x.user_id
 			-- end of step 1b
   			) AS y
