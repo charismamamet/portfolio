@@ -1,86 +1,86 @@
-with 
+WITH 
 -- combine the click into one dataset
-click_log as (
+click_log AS (
 
-select
+SELECT
 	ban.campaign_id,
 	ban.external_user_id,
-	cast(to_timestamp(ban.time) as date) as click_date,
-	'banner' as medium
-from USERS_MESSAGES_BANNER_CLICK_SHARED as ban
+	CAST(TO_TIMESTAMP(ban.time) AS DATE) AS click_date,
+	'banner' AS medium
+FROM USERS_MESSAGES_BANNER_CLICK_SHARED AS ban
 
-union all
+UNION ALL
 
-select
+SELECT
 	iam.campaign_id,
 	iam.external_user_id,
-	cast(to_timestamp(iam.time) as date) as click_date,
-	'pop-up' as medium
-from USERS_MESSAGES_INAPPMESSAGE_CLICK_SHARED as iam
+	CAST(TO_TIMESTAMP(iam.time) AS DATE) AS click_date,
+	'pop-up' AS medium
+FROM USERS_MESSAGES_INAPPMESSAGE_CLICK_SHARED AS iam
 
-union all
+UNION ALL
 
-select
+SELECT
 	pn.campaign_id,
 	pn.external_user_id,
-	cast(to_timestamp(pn.time) as date) as click_date,
-	'push' as medium
-from USERS_MESSAGES_PUSHNOTIFICATION_OPEN_SHARED as pn
+	CAST(TO_TIMESTAMP(pn.time) AS DATE) AS click_date,
+	'push' AS medium
+FROM USERS_MESSAGES_PUSHNOTIFICATION_OPEN_SHARED AS pn
 
-union all
+UNION ALL
 
-select
+SELECT
 	em.campaign_id,
 	em.external_user_id,
-	cast(to_timestamp(em.time) as date) as click_date,
-	'email' as medium
-from USERS_MESSAGES_EMAIL_CLICK_SHARED as em
+	CAST(TO_TIMESTAMP(em.time) AS DATE) AS click_date,
+	'email' AS medium
+FROM USERS_MESSAGES_EMAIL_CLICK_SHARED AS em
 
-union all
+UNION ALL
 
-select
+SELECT
 	wa.campaign_id,
 	wa.external_user_id,
-	cast(to_timestamp(wa.time) as date) as click_date,
-	'whatsapp' as medium
-from USERS_MESSAGES_WHATSAPP_CLICK_SHARED as wa
+	CAST(TO_TIMESTAMP(wa.time) AS DATE) AS click_date,
+	'whatsapp' AS medium
+FROM USERS_MESSAGES_WHATSAPP_CLICK_SHARED AS wa
 
-union all
+UNION ALL
 
-select
+SELECT
 	cc.campaign_id,
 	cc.external_user_id,
-	cast(to_timestamp(cc.time) as date) as click_date,
-	'content_card' as medium
-from USERS_MESSAGES_CONTENTCARD_CLICK_SHARED as cc
+	CAST(TO_TIMESTAMP(cc.time) AS DATE) AS click_date,
+	'content_card' AS medium
+FROM USERS_MESSAGES_CONTENTCARD_CLICK_SHARED AS cc
 
-union all
+UNION ALL
 
-select
+SELECT
 	nfc.campaign_id,
 	nfc.external_user_id,
-	cast(to_timestamp(nfc.time) as date) as click_date,
-	'news_feed_card' as medium
-from USERS_MESSAGES_NEWSFEEDCARD_CLICK_SHARED as nfc
+	CAST(TO_TIMESTAMP(nfc.time) AS DATE) AS click_date,
+	'news_feed_card' AS medium
+FROM USERS_MESSAGES_NEWSFEEDCARD_CLICK_SHARED AS nfc
 
-union all
+UNION ALL
 
-select
+SELECT
 	sms.campaign_id,
 	sms.external_user_id,
-	cast(to_timestamp(sms.time) as date) as click_date,
-	'sms' as medium
-from USERS_MESSAGES_SMS_SHORTLINKCLICK_SHARED as sms
+	CAST(TO_TIMESTAMP(sms.time) AS DATE) AS click_date,
+	'sms' AS medium
+FROM USERS_MESSAGES_SMS_SHORTLINKCLICK_SHARED AS sms
 
 ),
 
 -- creating dataset that has dummy column that work as a unique identifier per user id and sort it by time
-purchase_log as (
-  select
-	pl.id as purchase_id,
+purchase_log AS (
+  SELECT
+	pl.id AS purchase_id,
 	pl.external_user_id,
-	cast(to_timestamp(pl.time) as date) as purchase_date
-  FROM USERS_BEHAVIORS_PURCHASE_SHARED as pl
+	CAST(TO_TIMESTAMP(pl.time) AS DATE) AS purchase_date
+  FROM USERS_BEHAVIORS_PURCHASE_SHARED AS pl
 ),
 
 -- creating purchase_log dataset with dummy column that work as unique purchase_id
@@ -101,11 +101,11 @@ clicks_before_purchase AS (
     cl.campaign_id,
 	cl.medium,
     cl.click_date AS click_date,
-    DATEDIFF(pl.purchase_date, cl.click_date) AS diff_days
-  FROM purchase_log as pl
-  Inner JOIN click_log as cl ON cl.external_user_id = pl.external_user_id
+    ABS(DATEDIFF('day', cl.click_date, pl.purchase_date)) AS diff_days
+  FROM purchase_log AS pl
+  INNER JOIN click_log AS cl ON cl.external_user_id = pl.external_user_id
   WHERE cl.click_date <= pl.purchase_date
-    AND DATEDIFF(pl.purchase_date, cl.click_date) <= 30
+    AND DATEDIFF('day', cl.click_date, pl.purchase_date) <= 30
 ),
 
 -- create a dataset that list click and purchase in descending order , but also create a column that give number to the row
@@ -135,10 +135,12 @@ SELECT
   pl.external_user_id,
   pl.purchase_date,
   CASE WHEN lvc.campaign_id IS NULL OR lvc.campaign_id = '' THEN 'organic' ELSE lvc.campaign_id END AS campaign_id,
-  case when lvc.medium is null or lvc.medium ='' then 'other' else lvc.medium end as medium,
+  CASE WHEN lvc.medium IS NULL OR lvc.medium = '' THEN 'other' ELSE lvc.medium END AS medium,
   lvc.click_date,
   lvc.diff_days
-FROM purchase_log as pl
-LEFT JOIN latest_valid_click as lvc ON pl.purchase_id = lvc.purchase_id
+FROM purchase_log AS pl
+LEFT JOIN latest_valid_click AS lvc ON pl.purchase_id = lvc.purchase_id
 WHERE 1
+  AND pl.purchase_date >= DATE_TRUNC('week', CURRENT_DATE) - INTERVAL '7 day'
+  AND pl.purchase_date < DATE_TRUNC('week', CURRENT_DATE)
 ;
