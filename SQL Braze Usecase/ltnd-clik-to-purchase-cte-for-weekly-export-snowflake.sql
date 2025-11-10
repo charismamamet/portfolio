@@ -79,6 +79,7 @@ purchase_log AS (
   SELECT
 	pl.id AS purchase_id,
 	pl.external_user_id,
+	pl.price,
 	CAST(TO_TIMESTAMP(pl.time) AS DATE) AS purchase_date
   FROM USERS_BEHAVIORS_PURCHASE_SHARED AS pl
 ),
@@ -88,44 +89,49 @@ purchase_log AS (
 --  SELECT 
 --    concat(rpl.external_user_id, '_', rpl.purchase_row) as purchase_id,
 --    rpl.external_user_id,
+--	  rpl.price, 
 --    rpl.purchase_date AS purchase_date
 --  FROM raw_purchase_log as rpl
 --),
 
--- combine purchase_log and click_log datasets but only get click that has purchase within +30d after click
-clicks_before_purchase AS (
+-- combine purchase_log and view_log datasets but only get views that has purchase within +30d after views
+views_before_purchase AS (
   SELECT
     pl.purchase_id,
     pl.external_user_id,
     pl.purchase_date,
-    cl.campaign_id,
-	cl.medium,
-    cl.click_date AS click_date,
-    ABS(DATEDIFF('day', cl.click_date, pl.purchase_date)) AS diff_days
+	pl.price,
+    vl.campaign_id,
+	vl.medium,
+    vl.view_date AS view_date,
+    DATEDIFF('day', vl.view_date, pl.purchase_date) AS diff_days  --  no ABS() to prevent future views
   FROM purchase_log AS pl
-  INNER JOIN click_log AS cl ON cl.external_user_id = pl.external_user_id
-  WHERE cl.click_date <= pl.purchase_date
-    AND DATEDIFF('day', cl.click_date, pl.purchase_date) <= 30
+  INNER JOIN view_log AS vl ON vl.external_user_id = pl.external_user_id
+  WHERE 
+    vl.view_date <= pl.purchase_date  --  ensure view happened BEFORE purchase
+    AND DATEDIFF('day', vl.view_date, pl.purchase_date) BETWEEN 0 AND 30  --  only include views up to 30 days before purchase
 ),
 
--- create a dataset that list click and purchase in descending order , but also create a column that give number to the row
-arranged_click AS (
+-- create a dataset that list view and purchase in descending order , but also create a column that give number to the row
+arranged_view AS (
   SELECT 
     *,
-    ROW_NUMBER() OVER (PARTITION BY purchase_id ORDER BY click_date DESC) AS rn  -- this is for CRM purpose. Every purchase got attributed to last click
-	-- ROW_NUMBER() over (partition by campaign_id order by purchase_date asc) as rn  -- this is for ads or finding the first purchase after each click. 
-  FROM clicks_before_purchase
+    ROW_NUMBER() OVER (PARTITION BY purchase_id ORDER BY view_date DESC) AS rn  -- this is for CRM purpose. Every purchase got attributed to last view
+	-- ROW_NUMBER() over (partition by campaign_id order by purchase_date asc) as rn  -- this is for ads or finding the first purchase after each view. 
+  FROM views_before_purchase
 ),
 
 -- create a dataset that shows only rn = 1, meaning the one that is the latest
-latest_valid_click AS (
+latest_valid_view AS (
   SELECT 
     purchase_id,
+	external_user_id,
     campaign_id,
 	medium,
-	click_date,
+	view_date,
+	price,
 	diff_days
-  FROM arranged_click
+  FROM arranged_view
   WHERE rn = 1
 )
 

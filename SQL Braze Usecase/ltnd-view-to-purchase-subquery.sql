@@ -1,100 +1,80 @@
--- step 6: create overall table that has crm attributed purchase and organic purchase
-select 
-	ori_purchase_log.id as purchase_id,
-	ori_purchase_log.external_user_id as user_id,
-	from_unixtime(ori_purchase_log.time) as purchase_date,
-    case 
-    	when ltnd.campaign_id is null
-        	or ltnd.campaign_id = ''
-		then 'organic'
-        else ltnd.campaign_id
-	end as campaign_id,
-    case 
-    	when ltnd.medium is null
-        	or ltnd.medium = ''
-		then 'direct'
-        else ltnd.medium
-	end as campaign_medium,
-    ltnd.view_date,
-    ltnd.date_diff
-from USERS_BEHAVIORS_PURCHASE_SHARED as ori_purchase_log
-left join (
-	-- step 4: pick only rn = 1
-	select 
-		arranged_click.*
-	from (
-		-- step 3: add rn as identifier
-		select 
-			clicks_before_purchase.*,
-    		row_number() over (partition by clicks_before_purchase.purchase_id order by clicks_before_purchase.view_date desc) as rn
-		from (
-    		-- step 2: combine click log and purchase log, but only get click log within 30 days
-			select
-				pl.id as purchase_id,
-				pl.external_user_id,
-				from_unixtime(pl.time) as purchase_date,
-    			cl.campaign_id,
-    			cl.view_date,
-    			cl.medium,
-            	datediff(from_unixtime(pl.time), cl.view_date) as date_diff
-			from USERS_BEHAVIORS_PURCHASE_SHARED as pl				
-			inner join (
-				-- step 1.2: put all the click into one to make click_log as cl
-				SELECT
-					ban.campaign_id,
-					ban.external_user_id,
-					from_unixtime(ban.time) AS view_date,
-					'banner' AS medium
-				FROM USERS_MESSAGES_BANNER_IMPRESSION_SHARED AS ban
+-- STEP 6: Create overall table with CRM-attributed and organic purchases
+SELECT 
+  pl.id AS purchase_id,
+  pl.external_user_id AS user_id,
+  FROM_UNIXTIME(pl.time) AS purchase_date,
+  
+  CASE 
+    WHEN ltnd.campaign_id IS NULL OR ltnd.campaign_id = '' THEN 'organic'
+    ELSE ltnd.campaign_id
+  END AS campaign_id,
+  
+  CASE 
+    WHEN ltnd.medium IS NULL OR ltnd.medium = '' THEN 'direct'
+    ELSE ltnd.medium
+  END AS campaign_medium,
+  
+  ltnd.view_date,
+  ltnd.date_diff
 
-					UNION ALL
-
-				SELECT
-					iam.campaign_id,
-					iam.external_user_id,
-					from_unixtime(iam.time) AS view_date,
-					'pop-up' AS medium
-				FROM USERS_MESSAGES_INAPPMESSAGE_IMPRESSION_SHARED AS iam
-
-				UNION ALL
-
-				SELECT
-					pn.campaign_id,
-					pn.external_user_id,
-					from_unixtime(pn.time) AS view_date,
-					'push' AS medium
-				FROM USERS_MESSAGES_PUSHNOTIFICATION_SEND_SHARED AS pn
-
-				UNION ALL
-
-				SELECT
-					em.campaign_id,
-					em.external_user_id,
-					from_unixtime(em.time) AS view_date,
-					'email' AS medium
-				FROM USERS_MESSAGES_EMAIL_DELIVERY_SHARED AS em
-
-				UNION ALL
-
-				SELECT
-					wa.campaign_id,
-					wa.external_user_id,
-					from_unixtime(wa.time) AS view_date,
-					'whatsapp' AS medium
-				FROM USERS_MESSAGES_WHATSAPP_DELIVERY_SHARED AS wa
-				-- end of step 1.2
-				) as cl on cl.external_user_id = pl.external_user_id				
-			where 1
-				and from_unixtime(pl.time) >= cl.view_date 
-    			and abs(datediff(from_unixtime(pl.time), cl.view_date)) <= 30
-        	-- end of step 2
-    		) as clicks_before_purchase
-    	-- end of step 3
-    	) as arranged_click
-	where 1
-		and rn = 1
-	-- end of step 4
-    ) as ltnd on ltnd.purchase_id = ori_purchase_log.id
-where 1
-order by view_date desc
-;
+FROM USERS_BEHAVIORS_PURCHASE_SHARED AS pl -- step 5 is this line if we need to create our own purchase_id but we don't have to
+LEFT JOIN (
+  -- STEP 4: TRUE LTND Attribution Logic
+  SELECT 
+    purchase_id,
+    external_user_id,
+    campaign_id,
+    medium,
+    view_date,
+    date_diff
+  FROM (
+    -- STEP 3: add row number as rn
+    SELECT 
+      joined.purchase_id,
+      joined.external_user_id,
+      joined.campaign_id,
+      joined.medium,
+      joined.view_date,
+      joined.date_diff,
+      ROW_NUMBER() OVER (
+        PARTITION BY joined.purchase_id 
+        ORDER BY joined.view_date DESC, joined.campaign_id ASC
+      ) AS rn
+    FROM (
+      -- STEP 2: Only include views BEFORE purchase, within 30 days
+      SELECT
+        pl.id AS purchase_id,
+        pl.external_user_id,
+        FROM_UNIXTIME(pl.time) AS purchase_date,
+        vl.campaign_id,
+        vl.view_date,
+        vl.medium,
+        DATEDIFF(FROM_UNIXTIME(pl.time), vl.view_date) AS date_diff
+      FROM USERS_BEHAVIORS_PURCHASE_SHARED AS pl
+      INNER JOIN (
+        -- STEP 1: Combine all message impressions
+        SELECT campaign_id, external_user_id, FROM_UNIXTIME(time) AS view_date, 'banner'   AS medium FROM USERS_MESSAGES_BANNER_IMPRESSION_SHARED
+        UNION ALL
+        SELECT campaign_id, external_user_id, FROM_UNIXTIME(time) AS view_date, 'pop-up'   AS medium FROM USERS_MESSAGES_INAPPMESSAGE_IMPRESSION_SHARED
+        UNION ALL
+        SELECT campaign_id, external_user_id, FROM_UNIXTIME(time) AS view_date, 'push'     AS medium FROM USERS_MESSAGES_PUSHNOTIFICATION_SEND_SHARED
+        UNION ALL
+        SELECT campaign_id, external_user_id, FROM_UNIXTIME(time) AS view_date, 'email'    AS medium FROM USERS_MESSAGES_EMAIL_DELIVERY_SHARED
+        UNION ALL
+        SELECT campaign_id, external_user_id, FROM_UNIXTIME(time) AS view_date, 'whatsapp' AS medium FROM USERS_MESSAGES_WHATSAPP_DELIVERY_SHARED
+		-- end of -- STEP 1	
+	  ) AS vl 
+        ON vl.external_user_id = pl.external_user_id
+      WHERE 
+        vl.view_date <= FROM_UNIXTIME(pl.time)                   -- view must be BEFORE purchase
+        AND DATEDIFF(FROM_UNIXTIME(pl.time), vl.view_date) <= 30 -- within 30 days
+        AND DATEDIFF(FROM_UNIXTIME(pl.time), vl.view_date) >= 0  -- non-negative diff
+	  -- end of STEP 2	
+	) AS joined
+    -- end of STEP 3
+  ) AS ranked
+  WHERE rn = 1  -- ✅ pick latest view per purchase
+  -- end of STEP 4
+) AS ltnd 
+  ON ltnd.purchase_id = pl.id
+ORDER BY purchase_date DESC;
