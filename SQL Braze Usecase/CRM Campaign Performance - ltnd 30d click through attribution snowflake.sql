@@ -392,9 +392,9 @@ combined as (
   select 
     coalesce(bc.event_date, o.event_date) as event_date,
     coalesce(bc.campaign_id, o.campaign_id) as campaign_id,
-    bc.num_of_view,
+    coalesce(bc.num_of_view, 0) as num_of_view,
     coalesce(o.num_of_open, 0) as num_of_open,
-    num_of_click
+    coalesce(num_of_click, 0) as num_of_click
   from before_combined as bc
   full outer join open_summary as o 
     on o.campaign_id = bc.campaign_id
