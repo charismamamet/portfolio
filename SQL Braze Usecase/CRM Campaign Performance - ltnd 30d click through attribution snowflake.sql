@@ -104,8 +104,8 @@ view_summary AS (
 open_summary as (
   select 
     event_date,
-	campaign_id,
-	count(*) as num_of_open 
+	  campaign_id,
+	  count(*) as num_of_open 
   from open_log
   group by event_date, campaign_id 
 ),
@@ -376,7 +376,7 @@ latest_valid_pdp AS (
 
 -- -- final act of cte grouping 1
 -- Combine both sides (include clicks-only campaigns)
-combined AS (
+before_combined AS (
   SELECT 
     COALESCE(v.event_date, c.event_date) AS event_date,
     COALESCE(v.campaign_id, c.campaign_id) AS campaign_id,
@@ -386,6 +386,19 @@ combined AS (
   FULL OUTER JOIN click_summary as c
     ON v.campaign_id = c.campaign_id
    AND v.event_date = c.event_date
+),
+
+combined as (
+  select 
+    coalesce(bc.event_date, o.event_date) as event_date,
+    coalesce(bc.campaign_id, o.campaign_id) as campaign_id,
+    bc.num_of_view,
+    coalesce(o.num_of_open, 0) as num_of_open,
+    num_of_click
+  from before_combined as bc
+  full outer join open_summary as o 
+    on o.campaign_id = bc.campaign_id
+    and o.event_date = bc.event_date
 ),
 
 -- -- final act of cte grouping 2
