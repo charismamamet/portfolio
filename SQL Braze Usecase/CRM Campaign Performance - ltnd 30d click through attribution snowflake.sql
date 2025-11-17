@@ -466,8 +466,7 @@ left join latest_valid_click_agg as d on d.campaign_id = c.campaign_id and d.eve
 left join latest_valid_checkout_agg as e on e.campaign_id = c.campaign_id and e.event_date = c.event_date
 left join latest_valid_atc_agg as f on f.campaign_id = c.campaign_id and f.event_date = c.event_date 
 left join latest_valid_pdp_agg as g on g.campaign_id = c.campaign_id and g.event_date = c.event_date
-WHERE 1
-  AND c.event_date >= DATE_TRUNC('week', CURRENT_DATE) - INTERVAL '7 day'
+WHERE c.event_date >= DATE_TRUNC('week', CURRENT_DATE) - INTERVAL '7 day'
   AND c.event_date < DATE_TRUNC('week', CURRENT_DATE)
 ORDER BY c.event_date ASC, c.campaign_id
 ;

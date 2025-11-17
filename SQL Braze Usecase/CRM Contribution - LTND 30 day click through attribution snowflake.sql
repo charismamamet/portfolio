@@ -158,7 +158,6 @@ SELECT
   pl.os_version
 FROM purchase_log AS pl
 LEFT JOIN latest_valid_click AS lvc ON pl.purchase_id = lvc.purchase_id
-WHERE 1
-  AND pl.purchase_date >= DATE_TRUNC('week', CURRENT_DATE) - INTERVAL '7 day'
+WHERE pl.purchase_date >= DATE_TRUNC('week', CURRENT_DATE) - INTERVAL '7 day'
   AND pl.purchase_date < DATE_TRUNC('week', CURRENT_DATE)
 ;
