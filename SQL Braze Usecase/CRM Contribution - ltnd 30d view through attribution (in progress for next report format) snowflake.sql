@@ -1,7 +1,6 @@
--- CRM Campaign Performance - ltnd 30d click through attribution
 -- how to use: put this code into braze's snowflake sql editor. Then, click `Run`
--- what data will be issued after we run this? Answer: It will be a list of campaign engagement performance and the attributed purchase and value 
--- this code is made with the Last Touch Non Direct with 30 day window attribution model from click to purchase, like what Braze defaultly attributing the purchase
+-- what data will be issued after we run this? Answer: It will be a list of purchase and how do that purchase happen, whether it's organic or via crm campaign 
+-- this code is made with the Last Touch Non Direct with 30 day window attribution model from view to purchase, like what Braze defaultly attributing the purchase
 -- made by Mamet for the Renos gang
 -- with love 💖
 
@@ -9,22 +8,22 @@ WITH
 -- -- cte grouping 1
 -- Combine all view events
 view_log AS (
-  SELECT campaign_id, '' as canvas_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE) AS event_date, 'banner' AS medium
+  SELECT campaign_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE) AS event_date, 'banner' AS medium
   FROM USERS_MESSAGES_BANNER_IMPRESSION_SHARED
   UNION ALL
-  SELECT campaign_id, canvas_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), case when platform = 'web' then 'web-pop-up' else 'app-pop-up' end
+  SELECT campaign_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'pop-up'
   FROM USERS_MESSAGES_INAPPMESSAGE_IMPRESSION_SHARED
   UNION ALL
-  SELECT campaign_id, canvas_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), case when platform = 'web' then 'web-push' else 'app-push' end
+  SELECT campaign_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'push'
   FROM USERS_MESSAGES_PUSHNOTIFICATION_SEND_SHARED
   UNION ALL
-  SELECT campaign_id, canvas_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'email'
+  SELECT campaign_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'email'
   FROM USERS_MESSAGES_EMAIL_DELIVERY_SHARED
   UNION ALL
-  SELECT campaign_id, canvas_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'whatsapp'
+  SELECT campaign_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'whatsapp'
   FROM USERS_MESSAGES_WHATSAPP_DELIVERY_SHARED
   UNION ALL
-  SELECT campaign_id, canvas_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'content_card'
+  SELECT campaign_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'content_card'
   FROM USERS_MESSAGES_CONTENTCARD_IMPRESSION_SHARED
 -- UNION ALL
 
@@ -47,31 +46,31 @@ view_log AS (
 ),
 
 open_log AS (
-  SELECT campaign_id, canvas_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE) as event_date, 'email' as medium
+  SELECT campaign_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE) as event_date, 'email' as medium
   FROM USERS_MESSAGES_EMAIL_OPEN_SHARED
   UNION ALL
-  SELECT campaign_id, canvas_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'whatsapp'
+  SELECT campaign_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'whatsapp'
   FROM USERS_MESSAGES_WHATSAPP_READ_SHARED
 ),
 
 -- Combine all click events
 click_log AS (
-  SELECT campaign_id, '' as canvas_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE) AS event_date, 'banner' AS medium
+  SELECT campaign_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE) AS event_date, 'banner' AS medium
   FROM USERS_MESSAGES_BANNER_CLICK_SHARED
   UNION ALL
-  SELECT campaign_id, canvas_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), case when platform = 'web' then 'web-pop-up' else 'app-pop-up' end
+  SELECT campaign_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'pop-up'
   FROM USERS_MESSAGES_INAPPMESSAGE_CLICK_SHARED
   UNION ALL
-  SELECT campaign_id, canvas_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), case when platform = 'web' then 'web-push' else 'app-push' end
+  SELECT campaign_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'push'
   FROM USERS_MESSAGES_PUSHNOTIFICATION_OPEN_SHARED
   UNION ALL
-  SELECT campaign_id, canvas_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'email'
+  SELECT campaign_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'email'
   FROM USERS_MESSAGES_EMAIL_CLICK_SHARED
   UNION ALL
-  SELECT campaign_id, canvas_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'whatsapp'
+  SELECT campaign_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'whatsapp'
   FROM USERS_MESSAGES_WHATSAPP_CLICK_SHARED
   UNION ALL
-  SELECT campaign_id, canvas_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'content_card'
+  SELECT campaign_id, external_user_id, CAST(TO_TIMESTAMP(time) AS DATE), 'content_card'
   FROM USERS_MESSAGES_CONTENTCARD_CLICK_SHARED
 -- UNION ALL
 
@@ -97,37 +96,28 @@ view_summary AS (
   SELECT 
     event_date,
     campaign_id,
-	  canvas_id, 
-	  medium,
-    COUNT(*) AS num_of_view,
-	  coalesce(campaign_id,canvas_id) as anchor
+    COUNT(*) AS num_of_view
   FROM view_log
-  where campaign_id <> '693bc3bcb531780063a24c87' or campaign_id is null
-  GROUP BY event_date, campaign_id, canvas_id, medium
+  where campaign_id <> '693bc3bcb531780063a24c87'
+  GROUP BY event_date, campaign_id
 ),
 open_summary as (
   select 
     event_date,
-  	campaign_id,
-	  canvas_id, 
-  	medium,
-  	count(*) as num_of_open,
-  	coalesce(campaign_id,canvas_id) as anchor
+	campaign_id,
+	count(*) as num_of_open 
   from open_log
-  where campaign_id <> '693bc3bcb531780063a24c87' or campaign_id is null
-  group by event_date, campaign_id, canvas_id, medium 
+  where campaign_id <> '693bc3bcb531780063a24c87'
+  group by event_date, campaign_id 
 ),
 click_summary AS (
   SELECT 
     event_date,
     campaign_id,
-	  canvas_id,
-	  medium,
-    COUNT(*) AS num_of_click,
-	  coalesce(campaign_id,canvas_id) as anchor
+    COUNT(*) AS num_of_click
   FROM click_log
-  where campaign_id <> '693bc3bcb531780063a24c87' or campaign_id is null
-  GROUP BY event_date, campaign_id, canvas_id, medium
+  where campaign_id <> '693bc3bcb531780063a24c87'
+  GROUP BY event_date, campaign_id
 ),
 
 -- -- cte grouping 2
@@ -162,17 +152,15 @@ clicks_before_purchase AS (
     pl.purchase_date,
   	pl.price,
     cl.campaign_id,
-	  cl.canvas_id,
   	cl.medium,
     cl.event_date AS event_date,
-	  coalesce(cl.campaign_id, cl.canvas_id) as anchor,
     DATEDIFF('day', cl.event_date, pl.purchase_date) AS diff_days  --  no ABS() to prevent future clicks
   FROM purchase_log AS pl
   INNER JOIN click_log AS cl ON cl.external_user_id = pl.external_user_id
   WHERE 
     cl.event_date <= pl.purchase_date  --  ensure click happened BEFORE purchase
     AND DATEDIFF('day', cl.event_date, pl.purchase_date) BETWEEN 0 AND 30  --  only include click up to 30 days before purchase
-    AND (cl.campaign_id <> '693bc3bcb531780063a24c87' or campaign_id is null)
+    AND cl.campaign_id <> '693bc3bcb531780063a24c87'
 ),
 
 -- create a dataset that list click and purchase in descending order , but also create a column that give number to the row
@@ -187,7 +175,13 @@ arranged_click AS (
 -- create a dataset that shows only rn = 1, meaning the one that is the latest
 latest_valid_click AS (
   SELECT 
-    *
+    purchase_id as id,
+    campaign_id,
+  	medium,
+  	event_date,
+  	price,
+  	diff_days,
+	'purchase' as custom_event
   FROM arranged_click
   WHERE rn = 1
 ),
@@ -224,10 +218,8 @@ clicks_before_checkout AS (
     col.checkout_date,
 	col.price,
     cl.campaign_id,
-	cl.canvas_id,
-  	cl.medium,
+	cl.medium,
     cl.event_date AS event_date,
-	coalesce(cl.campaign_id, cl.canvas_id) as anchor,
     DATEDIFF('day', cl.event_date, col.checkout_date) AS diff_days  --  no ABS() to prevent future clicks
   FROM checkout_log AS col
   INNER JOIN click_log AS cl ON cl.external_user_id = col.external_user_id
@@ -248,7 +240,13 @@ arranged_click2 AS (
 -- create a dataset that shows only rn = 1, meaning the one that is the latest
 latest_valid_checkout AS (
   SELECT 
-    *
+    checkout_id as id,
+    campaign_id,
+	medium,
+	event_date,
+	price,
+	diff_days,
+	'begin_checkout' as custom_event
   FROM arranged_click2
   WHERE rn = 1
 ),
@@ -285,10 +283,8 @@ clicks_before_atc AS (
     atcl.atc_date,
 	atcl.price,
     cl.campaign_id,
-	cl.canvas_id,
-  	cl.medium,
+	cl.medium,
     cl.event_date AS event_date,
-	coalesce(cl.campaign_id, cl.canvas_id) as anchor,
     DATEDIFF('day', cl.event_date, atcl.atc_date) AS diff_days  --  no ABS() to prevent future clicks
   FROM atc_log AS atcl
   INNER JOIN click_log AS cl ON cl.external_user_id = atcl.external_user_id
@@ -309,7 +305,13 @@ arranged_click3 AS (
 -- create a dataset that shows only rn = 1, meaning the one that is the latest
 latest_valid_atc AS (
   SELECT 
-    *
+    atc_id as id,
+    campaign_id,
+	medium,
+	event_date,
+	price,
+	diff_days,
+	'add_to_cart' as custom_event
   FROM arranged_click3
   WHERE rn = 1
 ),
@@ -344,12 +346,10 @@ clicks_before_pdp AS (
     pdpl.pdp_id,
     pdpl.external_user_id,
     pdpl.pdp_date,
-	  pdpl.price,
+	pdpl.price,
     cl.campaign_id,
-	  cl.canvas_id,
-  	cl.medium,
+	cl.medium,
     cl.event_date AS event_date,
-	  coalesce(cl.campaign_id, cl.canvas_id) as anchor,
     DATEDIFF('day', cl.event_date, pdpl.pdp_date) AS diff_days  --  no ABS() to prevent future clicks
   FROM pdp_log AS pdpl
   INNER JOIN click_log AS cl ON cl.external_user_id = pdpl.external_user_id
@@ -370,128 +370,31 @@ arranged_click4 AS (
 -- create a dataset that shows only rn = 1, meaning the one that is the latest
 latest_valid_pdp AS (
   SELECT 
-    *
+    pdp_id as id,
+    campaign_id,
+	medium,
+	event_date,
+	price,
+	diff_days,
+	'view_item' as custom_event
   FROM arranged_click4
   WHERE rn = 1
-),
-
--- -- final act of cte grouping 1
--- Combine both sides (include clicks-only campaigns)
-before_combined AS (
-  SELECT 
-    COALESCE(v.event_date, c.event_date) AS event_date,
-    COALESCE(v.campaign_id, c.campaign_id) AS campaign_id,
-	  COALESCE(v.canvas_id, c.canvas_id) as canvas_id,
-	  coalesce(v.medium, c.medium) as medium,
-    COALESCE(v.num_of_view, 0) AS num_of_view,
-    COALESCE(c.num_of_click, 0) AS num_of_click,
-	  COALESCE(v.anchor, c.anchor) as anchor
-  FROM view_summary as v
-  FULL OUTER JOIN click_summary as c
-    ON v.anchor = c.anchor
-    AND v.event_date = c.event_date
-    and v.medium = c.medium
-),
-
-combined as (
-  select 
-    coalesce(bc.event_date, o.event_date) as event_date,
-    coalesce(bc.campaign_id, o.campaign_id) as campaign_id,
-	  coalesce(bc.canvas_id, o.canvas_id) as canvas_id,
-	  coalesce(bc.medium, o.medium) as medium,
-    coalesce(bc.num_of_view, 0) as num_of_view,
-    coalesce(o.num_of_open, 0) as num_of_open,
-    coalesce(num_of_click, 0) as num_of_click,
-	  coalesce(bc.anchor, o.anchor) as anchor
-  from before_combined as bc
-  full outer join open_summary as o 
-    on o.anchor = bc.anchor
-    and o.event_date = bc.event_date
-    and o.medium = bc.medium
-),
-
--- -- final act of cte grouping 2
--- aggregate the ltnd
-latest_valid_click_agg as (
-  SELECT
-  	event_date,
-  	campaign_id,
-	  canvas_id,
-  	medium,
-  	count(distinct(purchase_id)) as orders,
-  	sum(price) as value,
-	  anchor
-  from latest_valid_click
-  group by event_date, campaign_id, canvas_id, medium, anchor
-),
-
--- -- final act of cte grouping 3
--- aggregate ltnd checkout 
-latest_valid_checkout_agg as (
-  select 
-  	event_date,
-  	campaign_id,
-	  canvas_id,
-  	medium,
-  	count(distinct(checkout_id)) as checkout,
-  	sum(price) as value,
-	  anchor
-  from latest_valid_checkout
-  group by event_date, campaign_id, canvas_id, medium, anchor
-),
-
--- -- final act of cte grouping 4
--- aggregate ltnd atcl
-latest_valid_atc_agg as (
-  select 
-  	event_date,
-  	campaign_id,
-	  canvas_id
-  	medium,
-  	count(distinct(atc_id)) as atc,
-  	sum(price) as value,
-	  anchor
-  from latest_valid_atc
-  group by event_date, campaign_id, canvas_id, medium, anchor
-),
-
--- -- final act of cte grouping 5
--- aggregate ltnd pdpl
-latest_valid_pdp_agg as (
-  select 
-  	event_date,
-  	campaign_id,
-	  canvas_id,
-  	medium,
-  	count(distinct(pdp_id)) as pdp,
-  	sum(price) as value,
-	  anchor
-  from latest_valid_pdp
-  group by event_date, campaign_id, canvas_id, medium, anchor
 )
 
--- select c.* from before_combined as c
-
--- Final output
+-- put the data from latest_valid_click dataset into corresponding row in purchase_log
 SELECT 
-  c.event_date,
-  c.campaign_id,
-  c.canvas_id,
-  c.medium,
-  c.num_of_view,
-  c.num_of_open,
-  c.num_of_click,
-  coalesce(d.orders, 0) as orders,
-  coalesce(d.value, 0) as value,
-  coalesce(e.checkout, 0) as checkout,
-  coalesce(f.atc, 0) as atc,
-  coalesce(g.pdp, 0) as pdp
-FROM combined as c
-left join latest_valid_click_agg as d on d.anchor = c.anchor and d.event_date = c.event_date
-left join latest_valid_checkout_agg as e on e.anchor = c.anchor and e.event_date = c.event_date
-left join latest_valid_atc_agg as f on f.anchor = c.anchor and f.event_date = c.event_date 
-left join latest_valid_pdp_agg as g on g.anchor = c.anchor and g.event_date = c.event_date
-WHERE c.event_date >= DATE_TRUNC('week', CURRENT_DATE) - INTERVAL '7 day'
-  AND c.event_date < DATE_TRUNC('week', CURRENT_DATE)
-ORDER BY c.event_date ASC, c.anchor
+  pl.purchase_id,
+  pl.external_user_id,
+  pl.purchase_date,
+  pl.price as value,
+  CASE WHEN lvc.campaign_id IS NULL OR lvc.campaign_id = '' THEN 'organic' ELSE lvc.campaign_id END AS campaign_id,
+  CASE WHEN lvc.medium IS NULL OR lvc.medium = '' THEN 'organic' ELSE lvc.medium END AS medium,
+  lvc.event_date,
+  lvc.diff_days
+FROM purchase_log AS pl
+LEFT JOIN latest_valid_click AS lvc ON pl.purchase_id = lvc.id
+WHERE 1
+  AND pl.purchase_date >= DATE_TRUNC('week', CURRENT_DATE) - INTERVAL '7 day'
+  AND pl.purchase_date < DATE_TRUNC('week', CURRENT_DATE)
+limit 6
 ;
