@@ -117,14 +117,16 @@ left join (
 			f4.sku_name,
 			f4.cat_3,
         	f4.date_added,
-			sum(f4.total_order) as 'total_order'
+			sum(f4.total_order) as 'total_order',
+        	f4.source
 		from (
             -- step 4: combine all product data into one
 			select
 				b.sku_name,
 				b.cat_3,
             	b.date_added,
-				b.total_order as 'total_order'
+				b.total_order as 'total_order',
+            	'sku_bank' as source
 			from mock_renos_db.sku_bank as b
 		
 			union all 
@@ -132,8 +134,9 @@ left join (
 			select 
 				a.sku_name,
 				a.cat_name as 'cat_3',
-            	'2025-09-26' as 'date_added',
-				count(distinct(a.order_id)) as 'total_order'
+            	'2025-12-30' as 'date_added',
+				count(distinct(a.order_id)) as 'total_order',
+            	'purchase_data' as source
 			FROM mock_renos_db.mock_purchase as a 
 			left join blacklist_seller as bs on bs.seller_id = a.seller_id
 			left join suspicious_seller as ss on ss.seller_id = a.seller_id
