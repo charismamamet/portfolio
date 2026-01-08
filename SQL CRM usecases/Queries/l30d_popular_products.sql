@@ -32,7 +32,7 @@ FROM mock_renos_db.mock_purchase AS x
     left join mock_renos_db.blacklist_seller as xc on xc.seller_id = x.seller_id
 
     WHERE 1
-	    AND x.order_status IN ('menunggu pembayaran', 'selesai')
+	    AND x.order_status NOT IN ('menunggu pembayaran', 'dibatalkan')
     	AND xs.seller_name IS NULL
     	AND xb.user_id is null
       	and xc.seller_id is null
@@ -46,7 +46,7 @@ FROM mock_renos_db.mock_purchase AS x
 			left join mock_renos_db.blacklist_seller as d on d.seller_id = a.seller_id
 			where 1
 				and a.order_date >= date(now()) - interval 30 day
-    			and a.order_status in ('selesai','menunggu pembayaran')
+    			and a.order_status not in ('dibatalkan','menunggu pembayaran')
     			and b.seller_id is null
     			and c.user_id is null
     			and d.seller_id is null
