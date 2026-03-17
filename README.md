@@ -1,6 +1,8 @@
 # Portfolio
 Hey, thanks for reading this readme. This portfolio folder contains both dummy project and actual project that i've done.
 
+Every projects i've put here is about solving real business problems using data, not just reporting metrics.
+
 If you're interested to talk about these projects personally, please contact me through [LinkedIn](https://www.linkedin.com/in/charismarahmat)
 
 
